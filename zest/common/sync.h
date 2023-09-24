@@ -47,7 +47,7 @@ public:
     explicit Condition(Mutex &mutex);
     ~Condition();
     void wait();
-    void waitForSecond(double ms);
+    void waitForSeconds(double ms);
     void signal();
     void broadcast();
     

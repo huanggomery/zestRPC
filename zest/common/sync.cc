@@ -47,7 +47,7 @@ void Condition::wait() {pthread_cond_wait(&m_cond, m_mutex.getMutex());}
 void Condition::signal() {pthread_cond_signal(&m_cond);}
 void Condition::broadcast() {pthread_cond_broadcast(&m_cond);}
 
-void Condition::waitForSecond(double ms)
+void Condition::waitForSeconds(double ms)
 {
     struct timespec abstime;
     clock_gettime(CLOCK_REALTIME, &abstime);
