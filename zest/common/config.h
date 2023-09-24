@@ -23,6 +23,7 @@ public:
     std::string log_file_path() const {return m_log_file_path;}
     int log_max_file_size() const {return m_log_max_file_size;}
     int log_sync_interval() const {return m_log_sync_interval;}
+    int log_max_buffers() const {return m_log_max_buffers;}
     int port() const {return m_server_port;}
     int io_threads() const {return m_server_io_threads;}
     
@@ -32,6 +33,7 @@ private:
     std::string m_log_file_path;
     int m_log_max_file_size;    // 单个日志文件中最大记录条数
     int m_log_sync_interval;    // 日志刷盘间隔，单位ms
+    int m_log_max_buffers;      // 日志系统拥有的最多缓冲区数目
 
     int m_server_port;       // 端口号
     int m_server_io_threads; // 线程数

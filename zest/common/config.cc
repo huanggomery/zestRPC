@@ -1,8 +1,10 @@
 #include "config.h"
+#include "zest/common/util.h"
 #include <tinyxml/tinyxml.h>
 #include <stdexcept>
 #include <memory>
 #include <iostream>
+#include <sys/stat.h>
 
 // 未命名的空间，该空间中的函数和变量在文件外不可见
 namespace
@@ -63,6 +65,14 @@ void Config::SetGlobalConfig(const char *xmlfile)
             g_config = new Config(xmlfile);
         else
             g_config = new Config();
+
+        // 检查日志文件夹是否存在，如果不存在则新建文件夹
+        if (!folderExists(g_config->log_file_path())) {
+            if (mkdir(g_config->log_file_path().c_str(), 0775) != 0) {
+                std::cerr << "Create log file folder failed" << std::endl;
+                exit(-1);
+            }
+        }
     }
     else
         throw std::runtime_error("Set global config more than once");
@@ -98,6 +108,7 @@ Config::Config(const char *xmlfile)
     m_log_file_path = Read_Str_From_XML_Node(log, "log_file_path");
     m_log_max_file_size = std::stoi(Read_Str_From_XML_Node(log, "log_max_file_size"));
     m_log_sync_interval = std::stoi(Read_Str_From_XML_Node(log, "log_sync_interval"));
+    m_log_max_buffers = std::stoi(Read_Str_From_XML_Node(log, "log_max_buffers"));
 
     m_server_port = std::stoi(Read_Str_From_XML_Node(server, "port"));
     m_server_io_threads = std::stoi(Read_Str_From_XML_Node(server, "io_threads"));
