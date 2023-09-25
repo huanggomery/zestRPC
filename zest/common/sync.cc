@@ -47,11 +47,11 @@ void Condition::wait() {pthread_cond_wait(&m_cond, m_mutex.getMutex());}
 void Condition::signal() {pthread_cond_signal(&m_cond);}
 void Condition::broadcast() {pthread_cond_broadcast(&m_cond);}
 
-void Condition::waitForSeconds(double ms)
+void Condition::waitForMilliSeconds(double ms)
 {
     struct timespec abstime;
     clock_gettime(CLOCK_REALTIME, &abstime);
-    double seconds = ms * 1000;
+    double seconds = ms / 1000;
     const int64_t kNanoSecondsPerSecond = 1000000000;
     int64_t nanoseconds = static_cast<int64_t>(seconds * kNanoSecondsPerSecond);
     abstime.tv_sec += static_cast<time_t>((abstime.tv_nsec + nanoseconds) / kNanoSecondsPerSecond);

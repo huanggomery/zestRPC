@@ -30,7 +30,7 @@ std::string get_logfile_name(const std::string &file_name, const std::string &fi
 // 返回当前时间的字符串,格式类似于： 20230706 21:05:57.229383
 std::string get_time_str()
 {
-    char str_t[25] = {0};
+    char str_t[27] = {0};
     struct timeval tv;
     gettimeofday(&tv, NULL);
     time_t sec = tv.tv_sec;

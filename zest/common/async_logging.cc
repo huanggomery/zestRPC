@@ -73,7 +73,10 @@ AsyncLogging::AsyncLogging(const std::string &file_name, const std::string &file
 
 AsyncLogging::~AsyncLogging()
 {
-    if (m_running || m_tid != 0) {
+    if (m_tid != 0) {
+        // 避免太早析构，导致先置false，后置true的错误顺序
+        while (!m_running)
+            sleep(1);
         m_running = false;
         m_cond.signal();
         pthread_join(m_tid, NULL);
@@ -131,7 +134,7 @@ void AsyncLogging::backendThreadFunc()
             ScopeMutex mutex(m_mutex);
             cur = m_current_itr;   // 查看当前是否有缓冲区等待刷盘
             if (cur == m_next_to_flush)
-                m_cond.waitForSeconds(m_sync_interval);
+                m_cond.waitForMilliSeconds(m_sync_interval);
             cur = m_current_itr;   // 快照，后续的刷盘到此为止
         }
 
