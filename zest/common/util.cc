@@ -6,6 +6,7 @@
 #include <sys/syscall.h>
 #include <sys/stat.h>
 #include <iostream>
+#include <fcntl.h>
 
 namespace zest
 {
@@ -66,6 +67,15 @@ bool folderExists(const std::string& folderPath)
     }
 
     return S_ISDIR(info.st_mode);
+}
+
+// 将文件描述符设置为非阻塞
+void set_non_blocking(int fd)
+{
+    int old_opt = fcntl(fd, F_GETFL);
+    if (old_opt & O_NONBLOCK)
+        return;
+    fcntl(fd, F_SETFL, old_opt | O_NONBLOCK);
 }
 
 } // namespace zest

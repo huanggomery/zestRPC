@@ -21,6 +21,9 @@ pthread_t getTid();
 // 检测文件夹是否存在
 bool folderExists(const std::string& folderPath);
 
+// 将文件描述符设置为非阻塞
+void set_non_blocking(int fd);
+
 } // namespace zest
 
 
