@@ -1,5 +1,6 @@
 /* 定义一些工具函数 */
 #include "zest/common/util.h"
+#include "zest/common/logging.h"
 #include <sys/time.h>
 #include <string.h>
 #include <unistd.h>
@@ -7,6 +8,10 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/tcp.h>
 
 namespace zest
 {
@@ -76,6 +81,85 @@ void set_non_blocking(int fd)
     if (old_opt & O_NONBLOCK)
         return;
     fcntl(fd, F_SETFL, old_opt | O_NONBLOCK);
+}
+
+// 创建服务器套接字,如果失败，返回-1
+int create_socket_and_listen(int port)
+{
+    struct sockaddr_in address;
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_port = htons(port);
+
+    int listenfd = socket(PF_INET, SOCK_STREAM, 0);
+    if (listenfd == -1) {
+        // std::cerr << "create socket failed" << std::endl;
+        LOG_ERROR <<"Create socket failed";
+        return -1;
+    }
+
+    // 终止time-wait
+    int reuse = 1;
+    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+
+    // 禁用Nagle算法
+    int flag = 1;
+    setsockopt(listenfd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+
+    if (bind(listenfd, (sockaddr *)&address, sizeof(address)) == -1) {
+        LOG_ERROR << "bind failed";
+        close(listenfd);
+        return -1;
+    }
+
+    if (listen(listenfd, 2048) == -1) {
+        LOG_ERROR << "listen failed";
+        close(listenfd);
+        return -1;
+    }
+
+    set_non_blocking(listenfd);
+    return listenfd;
+}
+
+// 创建客户端套接字并连接服务器，如果失败，则返回-1
+int create_client_and_connect(char *ip, int port)
+{
+    struct sockaddr_in address;
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = inet_addr(ip);
+    address.sin_port = htons(port);
+
+    int clnfd = socket(PF_INET, SOCK_STREAM, 0);
+    if (clnfd == -1) {
+        // std::cerr << "create socket failed" << std::endl;
+        LOG_ERROR <<"Create socket failed";
+        return -1;
+    }
+    // 禁用Nagle算法
+    int flag = 1;
+    setsockopt(clnfd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+
+    if (connect(clnfd, (sockaddr*)&address, sizeof(address)) == -1) {
+        LOG_ERROR << "connect failed";
+        close(clnfd);
+        return -1;
+    }
+    return clnfd;
+}
+
+// 根据sockaddr_in，返回IP地址的点分十进制字符串
+std::string dotted_decimal_notation(const sockaddr_in &addr)
+{
+    return std::string(inet_ntoa(addr.sin_addr));
+}
+
+// 根据sockaddr_in，返回源端口号
+int src_port(const sockaddr_in &addr)
+{
+    return ntohs(addr.sin_port);
 }
 
 } // namespace zest
