@@ -44,6 +44,7 @@ EventLoop::EventLoop():
     m_stop_flag(false),
     m_mutex(),
     m_wakeup_fd(eventfd(0, EFD_NONBLOCK)),
+    m_timer(new TimerFdEvent()),
     m_wakeup_event(new WakeUpFdEvent(m_wakeup_fd))
 {
     if (m_epoll_fd == -1) {
@@ -55,15 +56,8 @@ EventLoop::EventLoop():
         LOG_ERROR << "eventfd failed";
         throw std::runtime_error("eventfd failed");
     }
-
-    // wakeup_event 的回调函数就是读取fd中的1字节数据
-    m_wakeup_event->listen(
-        FdEvent::IN_EVENT,
-        [this](){
-            char buf[8];
-            while (read(m_wakeup_fd, buf, 8) > 0) {/* do nothing */}
-        });
     
+    addEpollEvent(m_timer);
     addEpollEvent(m_wakeup_event);
 }
 
@@ -186,6 +180,12 @@ void EventLoop::deleteEpollEvent(SP_FdEvent fd_event)
         auto cb = [this, fd_event](){this->deleteEpollEvent(fd_event);};
         addTask(cb, true);
     }
+}
+
+// 添加一个定时器
+void EventLoop::addTimerEvent(SP_TimerEvent t_event)
+{
+    m_timer->addTimerEvent(t_event);
 }
 
 bool EventLoop::isThisThread() const
