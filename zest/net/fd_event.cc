@@ -46,6 +46,18 @@ void FdEvent::set_non_blocking()
     zest::set_non_blocking(m_fd);   // 使用的是utils.h中定义的函数
 }
 
+WakeUpFdEvent::WakeUpFdEvent(int fd): FdEvent(fd)
+{
+    // wakeup_event 的回调函数就是读取fd中的8字节数据
+    listen(
+        EPOLLIN | EPOLLET,
+        [fd](){
+            char buf[8];
+            while (read(fd, buf, 8) > 0) {/* do nothing */}
+        }
+    );
+}
+
 // 向fd中写入一个字节，用于从epoll_wait中返回
 void WakeUpFdEvent::wakeup()
 {

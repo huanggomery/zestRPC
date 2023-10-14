@@ -53,7 +53,7 @@ class WakeUpFdEvent: public FdEvent
 {
 public:
     WakeUpFdEvent() = delete;
-    WakeUpFdEvent(int fd): FdEvent(fd) { /* do nothing else */}
+    WakeUpFdEvent(int fd);
     ~WakeUpFdEvent() = default;
 
     void wakeup();  // 向fd中写入一个字节，用于从epoll_wait中返回
