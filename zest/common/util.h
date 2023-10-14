@@ -13,6 +13,9 @@ std::string get_logfile_name(const std::string &file_name, const std::string &fi
 // 返回当前时间的字符串,格式类似于： 20230706 21:05:57.229383
 std::string get_time_str();
 
+// 返回当前时间的ms表示
+int64_t get_now_ms();
+
 // 返回进程ID
 pid_t getPid();
 

@@ -50,6 +50,14 @@ std::string get_time_str()
     return std::string(str_t);
 }
 
+// 返回当前时间的ms表示
+int64_t get_now_ms()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
 // 返回进程ID
 pid_t getPid()
 {
