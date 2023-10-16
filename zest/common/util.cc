@@ -132,7 +132,7 @@ int create_socket_and_listen(int port)
 }
 
 // 创建客户端套接字并连接服务器，如果失败，则返回-1
-int create_client_and_connect(char *ip, int port)
+int create_client_and_connect(const char *ip, int port)
 {
     struct sockaddr_in address;
     memset(&address, 0, sizeof(address));
