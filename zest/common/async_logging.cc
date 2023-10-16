@@ -31,6 +31,7 @@ void AsyncLogging::InitAsyncLogger()
             std::cerr << "Creating logger backend thread failed" << std::endl;
             exit(-1);
         }
+        g_logger->m_init_sem.wait();   // 等待 m_running 被设置为true
     }
     else
         throw std::runtime_error("Set global logger more than once");
@@ -40,6 +41,7 @@ void AsyncLogging::InitAsyncLogger()
 void *AsyncLogging::threadFunc(void *)
 {
     g_logger->m_running = true;
+    g_logger->m_init_sem.post();
     // zest::AsyncLogging *logger_ = reinterpret_cast<zest::AsyncLogging*>(logger);
     g_logger->backendThreadFunc();
     return NULL;
@@ -59,6 +61,7 @@ AsyncLogging::AsyncLogging(const std::string &file_name, const std::string &file
     m_next_to_flush(m_buffers.end()),
     m_mutex(),
     m_cond(m_mutex),
+    m_init_sem(0),
     m_tid(0),
     m_running(false)
 {
@@ -74,9 +77,6 @@ AsyncLogging::AsyncLogging(const std::string &file_name, const std::string &file
 AsyncLogging::~AsyncLogging()
 {
     if (m_tid != 0) {
-        // 避免太早析构，导致先置false，后置true的错误顺序
-        while (!m_running)
-            sleep(1);
         m_running = false;
         m_cond.signal();
         pthread_join(m_tid, NULL);
