@@ -20,7 +20,7 @@ int64_t get_now_ms();
 pid_t getPid();
 
 // 返回线程ID
-pthread_t getTid();
+pid_t getTid();
 
 // 检测文件夹是否存在
 bool folderExists(const std::string& folderPath);

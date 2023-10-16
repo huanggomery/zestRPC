@@ -12,7 +12,7 @@ namespace zest
 {
 
 static thread_local std::shared_ptr<EventLoop> t_event_loop = nullptr;
-static thread_local pthread_t t_tid = 0;
+static thread_local pid_t t_tid = 0;
 static int g_epoll_max_timeout = 10000;   // 单位 ms
 static int g_epoll_max_events = 100;
 

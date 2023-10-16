@@ -17,7 +17,7 @@ namespace zest
 {
 
 static pid_t g_pid = 0;
-static thread_local pthread_t t_tid = 0;
+static thread_local pid_t t_tid = 0;
 
 // 生成日志文件名
 std::string get_logfile_name(const std::string &file_name, const std::string &file_path)
@@ -65,7 +65,7 @@ pid_t getPid()
 }
 
 // 返回线程ID
-pthread_t getTid()
+pid_t getTid()
 {
     return t_tid != 0 ? t_tid : (t_tid = syscall(SYS_gettid));
 }

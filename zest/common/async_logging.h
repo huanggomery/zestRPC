@@ -93,7 +93,7 @@ private:
     Sem m_init_sem;    // 仅用于确保后端线程正确开启
 
     /* 后端线程的启停 */
-    pthread_t m_tid;
+    pthread_t m_thread;
     bool m_running;
 };
 

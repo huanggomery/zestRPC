@@ -45,7 +45,7 @@ private:
 
 private:
     std::unordered_map<int, SP_FdEvent> m_listen_fds;  // 所有监听的fd的集合
-    pthread_t m_tid {0};                        // 记录创建该对象的线程号
+    pid_t m_tid {0};                        // 记录创建该对象的线程号
     int m_epoll_fd {0};                         // epoll_fd
     bool m_stop_flag {false};                   // 是否停止
     std::queue<CallBackFunc> m_pending_tasks;   // 等待处理的回调函数

@@ -27,7 +27,7 @@ void AsyncLogging::InitAsyncLogger()
                 g_cfg->log_max_file_size(), g_cfg->log_sync_interval(), g_cfg->log_max_buffers())
         );
 
-        if (pthread_create(&g_logger->m_tid, NULL, threadFunc, NULL) != 0) {
+        if (pthread_create(&g_logger->m_thread, NULL, threadFunc, NULL) != 0) {
             std::cerr << "Creating logger backend thread failed" << std::endl;
             exit(-1);
         }
@@ -62,7 +62,7 @@ AsyncLogging::AsyncLogging(const std::string &file_name, const std::string &file
     m_mutex(),
     m_cond(m_mutex),
     m_init_sem(0),
-    m_tid(0),
+    m_thread(0),
     m_running(false)
 {
     // 初始时有4个缓冲区
@@ -76,10 +76,10 @@ AsyncLogging::AsyncLogging(const std::string &file_name, const std::string &file
 
 AsyncLogging::~AsyncLogging()
 {
-    if (m_tid != 0) {
+    if (m_thread != 0) {
         m_running = false;
         m_cond.signal();
-        pthread_join(m_tid, NULL);
+        pthread_join(m_thread, NULL);
     }
 }
 
