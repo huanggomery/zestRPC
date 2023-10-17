@@ -60,7 +60,7 @@ private:
 class Sem
 {
 public:
-    Sem(int n = 0);
+    explicit Sem(int n = 0);
     ~Sem();
     void wait();
     void post();

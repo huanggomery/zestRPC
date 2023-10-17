@@ -16,6 +16,8 @@ namespace zest
 
 class EventLoop: public noncopyable
 {
+public:
+    using s_ptr = std::shared_ptr<EventLoop>;
     using CallBackFunc = std::function<void()>;  // 回调函数
     using SP_FdEvent = std::shared_ptr<FdEvent>;
     using SP_TimerEvent = std::shared_ptr<TimerEvent>;

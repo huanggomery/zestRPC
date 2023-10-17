@@ -117,7 +117,7 @@ void EventLoop::loop()
 
 void EventLoop::stop()
 {
-    LOG_INFO << "stop event loop";
+    LOG_DEBUG << "stop event loop";
     m_stop_flag = true;
     wakeup();
 }
