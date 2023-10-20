@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <list>
+#include <string>
 #include <string.h>
 #include <memory>
 
