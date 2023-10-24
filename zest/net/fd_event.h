@@ -3,6 +3,7 @@
 #define ZEST_NET_FD_EVENT_H
 #include <sys/epoll.h>
 #include <functional>
+#include <memory>
 #include "zest/common/noncopyable.h"
 #include "zest/common/logging.h"
 
@@ -13,6 +14,7 @@ namespace zest
 class FdEvent: public noncopyable
 {
 public:
+    using s_ptr = std::shared_ptr<FdEvent>;
     using CallBackFunc = std::function<void()>;
     enum TriggerEvent {
         IN_EVENT = EPOLLIN,
