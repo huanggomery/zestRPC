@@ -61,6 +61,19 @@ EventLoop::EventLoop():
     addEpollEvent(m_wakeup_event);
 }
 
+// 析构函数，把工作队列中剩下的事处理完
+EventLoop::~EventLoop()
+{
+    ScopeMutex mutex(m_mutex);
+
+    // 处理工作队列中的回调函数
+    while (!m_pending_tasks.empty()) {
+        auto cb = m_pending_tasks.front();
+        m_pending_tasks.pop();
+        if (cb) cb();
+    }
+}
+
 // 核心功能：循环监听注册在epoll_fd上的文件描述符，并处理回调函数
 void EventLoop::loop()
 {

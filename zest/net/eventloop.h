@@ -23,7 +23,7 @@ public:
     using SP_TimerEvent = std::shared_ptr<TimerEvent>;
 public:
     static std::shared_ptr<EventLoop> CreateEventLoop();   // 工厂函数
-    ~EventLoop() = default;
+    ~EventLoop();
 
     // 核心功能：循环监听注册在epoll_fd上的文件描述符，并处理回调函数
     void loop();
