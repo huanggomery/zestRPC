@@ -2,6 +2,7 @@
 #include "zest/net/tcp/tcp_server.h"
 #include "zest/net/fd_event.h"
 #include "zest/common/config.h"
+#include "zest/common/logging.h"
 
 namespace zest
 {
@@ -37,13 +38,36 @@ TcpServer::TcpServer(NetAddrBase::s_ptr local_addr) :
 // 服务器，启动！
 void TcpServer::start()
 {
-    TODO!!!
+    m_running = true;
+    m_thread_pool->start();
+    m_main_eventloop->loop();
+}
+
+// 关闭服务器
+void TcpServer::stop()
+{
+    m_main_eventloop->stop();
+    m_running = false;
 }
 
 // 本地监听套接字的回调函数
 void TcpServer::accept_callback()
 {
-    TODO!!!
+    auto new_clients = m_acceptor->accept();
+    for (auto &client : new_clients) {
+        int client_fd = client.first;
+        NetAddrBase::s_ptr peer_addr = client.second;
+        IOThread::s_ptr io_thread = m_thread_pool->get_io_thread();
+        auto connection = std::make_shared<TcpConnection>(
+            m_local_addr,
+            peer_addr,
+            io_thread->get_eventloop(),
+            client_fd,
+            TcpConnectionByServer,
+            Connected);
+        m_connections[client_fd] = connection;
+        LOG_INFO << "Accept new connection, fd = " << client_fd << " address: " << peer_addr->to_string();
+    }
 }
 
 } // namespace zest

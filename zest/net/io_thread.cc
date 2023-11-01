@@ -70,6 +70,10 @@ ThreadPool::ThreadPool(int n): m_thread_num(n), m_index(0), m_thread_pool(n, nul
 
 ThreadPool::~ThreadPool()
 {
+    /* do nothing 
+     * 但是 ThreadPool 析构时，会引发 m_thread_pool 中所有 IOThread 的析构函数
+     * IOThread 的析构函数就是停止工作线程的eventloop循环，并等待工作线程退出
+     */
     LOG_INFO << "Thread pool exit";
 }
 
