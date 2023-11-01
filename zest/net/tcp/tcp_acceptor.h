@@ -5,6 +5,7 @@
 #include "zest/net/tcp/net_addr.h"
 #include <unistd.h>
 #include <memory>
+#include <unordered_map>
 
 
 namespace zest
@@ -19,7 +20,7 @@ public:
     TcpAcceptor(NetAddrBase::s_ptr addr);
     ~TcpAcceptor() { close(m_listenfd); }
     int get_listenfd() const {return m_listenfd;}
-    int accept();
+    std::unordered_map<int, NetAddrBase::s_ptr> accept();
     
 private:
     NetAddrBase::s_ptr m_addr {nullptr};

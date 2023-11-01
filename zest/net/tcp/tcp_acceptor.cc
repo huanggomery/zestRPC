@@ -48,21 +48,25 @@ TcpAcceptor::TcpAcceptor(NetAddrBase::s_ptr addr) :
     LOG_DEBUG << "create listenfd successful";
 }
 
-int TcpAcceptor::accept()
+std::unordered_map<int, NetAddrBase::s_ptr> TcpAcceptor::accept()
 {
+    std::unordered_map<int, NetAddrBase::s_ptr> new_clients;
     if (m_domain == PF_INET) {
         sockaddr_in client_addr;
         socklen_t len = sizeof(client_addr);
         memset(&client_addr, 0, len);
-        int clientfd = ::accept(m_listenfd, reinterpret_cast<sockaddr*>(&client_addr), &len);
-        if (clientfd == -1) {
-            LOG_ERROR << "accept failed, errno = " << errno;
+        int clientfd;
+        while ((clientfd = ::accept(m_listenfd, reinterpret_cast<sockaddr*>(&client_addr), &len)) != -1) {
+            IPv4Addr::s_ptr peer_addr = std::make_shared<IPv4Addr>(client_addr);
+            new_clients[clientfd] = peer_addr;
+            LOG_INFO << "accept new connection, peer address: " << peer_addr->to_string();
+            memset(&client_addr, 0, len);
         }
-        return clientfd;
+        return new_clients;
     }
     else {
         // other protocol...
-        return -1;
+        return new_clients;
     }
 }
 
