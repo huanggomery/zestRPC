@@ -63,6 +63,17 @@ target("test_io_thread")
     add_syslinks("pthread")
     set_optimize("fastest")
 
+target("test_tcp_server")
+    set_kind("binary")
+    set_targetdir("bin")
+    set_objectdir("obj")
+    set_languages("c++11")
+    add_files("testcases/test_tcp_server.cc", "zest/common/*.cc", "zest/net/*.cc", "zest/net/tcp/*.cc")
+    add_includedirs("/usr/include", "/usr/local/include", "/usr/include/tinyxml", ".")
+    add_links("lib/libtinyxml.a")
+    add_syslinks("pthread")
+    set_optimize("fastest")
+
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --

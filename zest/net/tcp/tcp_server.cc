@@ -31,7 +31,7 @@ TcpServer::TcpServer(NetAddrBase::s_ptr local_addr) :
     }
 
     FdEvent::s_ptr listenfd_event(new FdEvent(m_acceptor->get_listenfd()));
-    listenfd_event->listen(EPOLLIN | EPOLLET, std::bind(accept_callback, this));
+    listenfd_event->listen(EPOLLIN | EPOLLET, std::bind(&TcpServer::accept_callback, this));
     m_main_eventloop->addEpollEvent(listenfd_event);
 }
 

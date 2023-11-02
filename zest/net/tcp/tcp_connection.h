@@ -54,6 +54,7 @@ private:
     void tcp_read();
     void tcp_write();
     void execute();    // 读完套接字后，解析、处理请求
+    void shutdown();   // 半关闭
 
 private:
     NetAddrBase::s_ptr m_local_addr;

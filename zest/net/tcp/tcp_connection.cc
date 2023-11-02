@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-
+#include <unistd.h>
 
 namespace zest
 {
@@ -37,14 +37,14 @@ TcpConnection::TcpConnection(NetAddrBase::s_ptr local_addr, NetAddrBase::s_ptr p
 // 让套接字监听可读事件
 void TcpConnection::listen_read()
 {
-    m_fd_event->listen(EPOLLIN | EPOLLET | EPOLLONESHOT, std::bind(TcpConnection::tcp_read, this));
+    m_fd_event->listen(EPOLLIN | EPOLLET | EPOLLONESHOT, std::bind(&TcpConnection::tcp_read, this));
     m_eventloop->addEpollEvent(m_fd_event);
 }
 
 // 让套接字监听可写事件
 void TcpConnection::listen_write()
 {
-    m_fd_event->listen(EPOLLOUT | EPOLLET | EPOLLONESHOT, std::bind(TcpConnection::tcp_write, this));
+    m_fd_event->listen(EPOLLOUT | EPOLLET | EPOLLONESHOT, std::bind(&TcpConnection::tcp_write, this));
     m_eventloop->addEpollEvent(m_fd_event);
 }
 
@@ -86,10 +86,13 @@ void TcpConnection::tcp_read()
 
     if (is_error) {
         // TODO
+        shutdown();
         return;
     }
     if (is_closed) {
         // TODO
+        ::close(m_fd);
+        clear();
         return;
     }
 
@@ -129,6 +132,14 @@ void TcpConnection::execute()
 
     m_out_buffer.swap(m_in_buffer);
     listen_write();
+}
+
+void TcpConnection::shutdown()
+{
+    if (m_state == Closed || m_state == NotConnected)
+        return;
+    m_state = HalfClosing;
+    ::shutdown(m_fd, SHUT_WR);
 }
 
 } // namespace zest
