@@ -123,6 +123,7 @@ void TcpConnection::tcp_write()
         // TODO
         return;
     }
+    listen_read();
 }
 
 void TcpConnection::execute()

@@ -20,7 +20,7 @@ public:
     using s_ptr = std::shared_ptr<TcpServer>;
 
     TcpServer(NetAddrBase::s_ptr local_addr);
-    ~TcpServer();
+    ~TcpServer() = default;
 
     // 服务器，启动！
     void start();
