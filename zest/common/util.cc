@@ -170,4 +170,12 @@ int src_port(const sockaddr_in &addr)
     return ntohs(addr.sin_port);
 }
 
+// 从网络字节序列中读取一个int32
+int32_t get_int32_from_net_bytes(const char *buf)
+{
+    int32_t result;
+    memcpy(&result, buf, 4);
+    return ntohl(result);
+}
+
 } // namespace zest

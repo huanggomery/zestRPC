@@ -19,7 +19,10 @@ class TcpServer : public noncopyable
 public:
     using s_ptr = std::shared_ptr<TcpServer>;
 
-    TcpServer(NetAddrBase::s_ptr local_addr);
+    static void CreateTcpServer(NetAddrBase::s_ptr local_addr);
+
+    static s_ptr GetTcpServer();
+
     ~TcpServer() = default;
 
     // 服务器，启动！
@@ -29,7 +32,13 @@ public:
     void stop();
 
     // 本地监听套接字的回调函数
-    void accept_callback();   
+    void accept_callback();
+
+    // 清除失效的TCP连接
+    void remove_connection(int fd);
+
+private:
+    TcpServer(NetAddrBase::s_ptr local_addr);
 
 private:
     NetAddrBase::s_ptr m_local_addr;       // 监听的本地地址

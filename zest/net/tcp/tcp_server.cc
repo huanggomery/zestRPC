@@ -3,9 +3,30 @@
 #include "zest/net/fd_event.h"
 #include "zest/common/config.h"
 #include "zest/common/logging.h"
+#include <stdexcept>
 
 namespace zest
 {
+
+static TcpServer::s_ptr g_tcp_server = nullptr;
+
+void TcpServer::CreateTcpServer(NetAddrBase::s_ptr local_addr)
+{
+    if (g_tcp_server != nullptr) {
+        LOG_ERROR << "TcpServer already exists";
+        return;
+    }
+    g_tcp_server = std::make_shared<TcpServer>(local_addr);
+}
+
+TcpServer::s_ptr TcpServer::GetTcpServer()
+{
+    if (g_tcp_server == nullptr) {
+        LOG_ERROR << "TcpServer is NULL";
+        throw std::runtime_error("TcpServer is NULL");
+    }
+    return g_tcp_server;
+}
 
 TcpServer::TcpServer(NetAddrBase::s_ptr local_addr) :
     m_local_addr(local_addr), 
@@ -65,9 +86,19 @@ void TcpServer::accept_callback()
             client_fd,
             TcpConnectionByServer,
             Connected);
+        if (!connection) {
+            LOG_ERROR << "create TcpConnection failed, address: " << peer_addr->to_string();
+            return;
+        }
         m_connections[client_fd] = connection;
         LOG_INFO << "Accept new connection, fd = " << client_fd << " address: " << peer_addr->to_string();
     }
+}
+
+// 清除失效的TCP连接
+void TcpServer::remove_connection(int fd)
+{
+    m_connections[fd].reset();
 }
 
 } // namespace zest

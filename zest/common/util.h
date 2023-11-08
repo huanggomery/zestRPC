@@ -40,6 +40,9 @@ std::string dotted_decimal_notation(const sockaddr_in &addr);
 // 根据sockaddr_in，返回源端口号
 int src_port(const sockaddr_in &addr);
 
+// 从网络字节序列中读取一个int32
+int32_t get_int32_from_net_bytes(const char *buf);
+
 } // namespace zest
 
 
