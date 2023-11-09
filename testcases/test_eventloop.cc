@@ -73,7 +73,7 @@ void *server_thread_func(void *)
     return nullptr;
 }
 
-// 客户端线程，想服务器socket发送字节
+// 客户端线程，向服务器socket发送字节
 void *client_thread_func(void *)
 {
     int client_fd = zest::create_client_and_connect("127.0.0.1", g_port);

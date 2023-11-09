@@ -12,6 +12,7 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 using SP_EventLoop = std::shared_ptr<zest::EventLoop>;
 using SP_TimerEvent = std::shared_ptr<zest::TimerEvent>;
@@ -27,14 +28,14 @@ void *eventloop_thread(void *)
 // 测试周期性定时器，以及set_valid
 void *set_valid_test(void *)
 {
-    volatile int i = 0;
+    volatile int i = 1;
     SP_TimerEvent timer_event(new zest::TimerEvent(
         1000, 
         [&i](){LOG_DEBUG << "set valid test: i = " << i; ++i;},
         true)
     );
-    while (!g_event_loop) {}
     g_event_loop->addTimerEvent(timer_event);
+    std::cout << "add timer, interval = 1000" << std::endl;
     while (i != 5) {}
     timer_event->set_valid(false);   // 应该只会打印出1～4,不会打印5
     
@@ -45,14 +46,14 @@ void *set_valid_test(void *)
 // 测试周期性定时器，以及set_periodic
 void *set_periodic_test(void *)
 {
-    volatile int i = 0;
+    volatile int i = 1;
     SP_TimerEvent timer_event(new zest::TimerEvent(
         2000, 
         [&i](){LOG_DEBUG << "set periodic test: i = " << i; ++i;},
         true)
     );
-    while (!g_event_loop) {}
     g_event_loop->addTimerEvent(timer_event);
+    std::cout << "add timer, interval = 2000" << std::endl;
     while (i != 5) {}
     timer_event->set_periodic(false);   // 会打印出1～5
     
@@ -67,6 +68,9 @@ int main()
     
     pthread_t event_loop_tid, timer_tid1, timer_tid2;
     pthread_create(&event_loop_tid, NULL, eventloop_thread, NULL);
+
+    sleep(1);   // 等待1s，确保 g_event_loop 构造完
+    
     pthread_create(&timer_tid1, NULL, set_periodic_test, NULL);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     pthread_create(&timer_tid2, NULL, set_valid_test, NULL);
@@ -74,7 +78,6 @@ int main()
 
     pthread_join(timer_tid1, NULL);
     pthread_join(timer_tid2, NULL);
-    sleep(4);
     g_event_loop->stop();
     pthread_join(event_loop_tid, NULL);
     return 0;
