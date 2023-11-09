@@ -1,0 +1,18 @@
+syntax = "proto3";
+option cc_generic_services = true;
+
+message sumRequest
+{
+    int32 num1 = 1;
+    int32 num2 = 2;
+}
+
+message sumResponse
+{
+    int32 result = 1;
+}
+
+service TestService
+{
+    rpc sum(sumRequest) returns (sumResponse);
+}

@@ -1,6 +1,7 @@
-/* 封装TCP连接，需要有读写操作以及修改epoll监听事件 */
+/* 封装TCP连接，需要有读写操作、业务处理以及修改epoll监听事件 */
 #include "zest/net/tcp/tcp_connection.h"
 #include "zest/net/tcp/tcp_server.h"
+#include "zest/net/rpc/rpc_service.h"
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -61,6 +62,7 @@ void TcpConnection::tcp_read()
     if (m_state == HalfClosing)
         is_closed = true;
 
+    int recv_len = 0;
     while (!is_error && !is_closed && !is_finished) {
         memset(tmp_buf, 0, sizeof(tmp_buf));
         int len = recv(m_fd, tmp_buf, sizeof(tmp_buf), 0);
@@ -78,7 +80,8 @@ void TcpConnection::tcp_read()
         }
         // 正常情况
         else {
-            m_in_buffer += tmp_buf;
+            m_in_buffer.append(tmp_buf, len);
+            recv_len += len;
         }
     }
 
@@ -94,6 +97,7 @@ void TcpConnection::tcp_read()
         return;
     }
 
+    LOG_DEBUG << "receive " << recv_len << " bytes data from " << m_peer_addr->to_string();
     execute();
 }
 
@@ -121,25 +125,39 @@ void TcpConnection::tcp_write()
         shutdown();
         LOG_ERROR << "TCP write error, shutdown connection";
     }
+    else {
+        LOG_DEBUG << "send data to " << m_peer_addr->to_string();
+    }
 
     listen_read();
 }
 
 void TcpConnection::execute()
 {
-    RpcProtocol::s_ptr req_protocol;
+    RpcProtocol::s_ptr req_protocol, rsp_protocol = std::make_shared<RpcProtocol>();
     while (req_protocol = m_decoder.decode()) {
-        // TODO: 处理RPC请求。并将结果写入 m_out_buffer
+        LOG_DEBUG << "decode protocol from " << m_peer_addr->to_string() << " success";
+        rsp_protocol->m_msg_id_len = req_protocol->m_msg_id_len;
+        rsp_protocol->m_msg_id = req_protocol->m_msg_id;
+        rsp_protocol->m_method_name_len = req_protocol->m_method_name_len;
+        rsp_protocol->m_method_name = req_protocol->m_method_name;
+
+        RpcService::GetRpcService()->process(req_protocol, rsp_protocol, shared_from_this());
+        rsp_protocol->clear();
     }
 
     // 判断RPC请求是否出错
     if (m_decoder.is_failed()) {
-        // TODO: 收到错误的请求，应该发送带有错误码和错误信息的RPC响应
+        LOG_ERROR << "decoder failed";
+        // TODO: 目前还没想好如果收到错误的请求该怎么处理
     }
 
     // m_out_buffer 非空，则等待发送
     if (!m_out_buffer.empty()) {
         listen_write();
+    }
+    else {
+        listen_read();
     }
 }
 

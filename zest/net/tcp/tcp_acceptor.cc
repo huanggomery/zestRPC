@@ -59,7 +59,7 @@ std::unordered_map<int, NetAddrBase::s_ptr> TcpAcceptor::accept()
         while ((clientfd = ::accept(m_listenfd, reinterpret_cast<sockaddr*>(&client_addr), &len)) != -1) {
             IPv4Addr::s_ptr peer_addr = std::make_shared<IPv4Addr>(client_addr);
             new_clients[clientfd] = peer_addr;
-            LOG_INFO << "accept new connection, peer address: " << peer_addr->to_string();
+            // LOG_INFO << "accept new connection, peer address: " << peer_addr->to_string();
             memset(&client_addr, 0, len);
         }
         return new_clients;

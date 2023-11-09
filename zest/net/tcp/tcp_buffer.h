@@ -2,6 +2,8 @@
 #ifndef ZEST_NET_TCP_TCP_BUFFER
 #define ZEST_NET_TCP_TCP_BUFFER
 #include <string>
+#include <iterator>
+#include <algorithm>
 
 
 namespace zest
@@ -41,6 +43,25 @@ public:
         TcpBuffer tmp_buf = *this;
         tmp_buf += s;
         return tmp_buf;
+    }
+
+    TcpBuffer& operator+=(const char c)
+    {
+        m_buffer.push_back(c);
+        return *this;
+    }
+
+    TcpBuffer operator+(const char c)
+    {
+        TcpBuffer tmp_buf = *this;
+        tmp_buf += c;
+        return tmp_buf;
+    }
+
+    void append(const char *p, std::size_t len)
+    {
+        auto it = std::back_inserter(m_buffer);
+        std::copy_n(p, len, it);
     }
 
     std::size_t size() const {return m_buffer.size()-m_start_index;}
@@ -93,7 +114,7 @@ private:
 };
 
 // 交换两个TcpBuffer
-void swap(TcpBuffer &buf1, TcpBuffer &buf2)
+inline void swap(TcpBuffer &buf1, TcpBuffer &buf2)
 {
     using std::swap;
     swap(buf1.m_buffer, buf2.m_buffer);

@@ -16,7 +16,7 @@ void TcpServer::CreateTcpServer(NetAddrBase::s_ptr local_addr)
         LOG_ERROR << "TcpServer already exists";
         return;
     }
-    g_tcp_server = std::make_shared<TcpServer>(local_addr);
+    g_tcp_server.reset(new TcpServer(local_addr));
 }
 
 TcpServer::s_ptr TcpServer::GetTcpServer()

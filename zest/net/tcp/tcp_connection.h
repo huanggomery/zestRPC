@@ -1,4 +1,4 @@
-/* 封装TCP连接，需要有读写操作以及修改epoll监听事件 */
+/* 封装TCP连接，需要有读写操作、业务处理以及修改epoll监听事件 */
 #ifndef ZEST_NET_TCP_TCP_CONNECTION_H
 #define ZEST_NET_TCP_TCP_CONNECTION_H
 
@@ -27,7 +27,7 @@ enum TcpState {
     Closed = 4,
 };
 
-class TcpConnection: public noncopyable
+class TcpConnection: public noncopyable, public std::enable_shared_from_this<TcpConnection>
 {
 public:
     using s_ptr = std::shared_ptr<TcpConnection>;
@@ -42,6 +42,9 @@ public:
     void listen_read();    // 让套接字监听可读事件
     void listen_write();   // 让套接字监听可写事件
     void clear();
+
+    // 获取发送缓存
+    TcpBuffer& out_buffer() {return m_out_buffer;}
 
 private:
     void tcp_read();
