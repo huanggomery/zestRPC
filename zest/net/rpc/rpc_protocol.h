@@ -25,6 +25,9 @@ struct RpcProtocol
     static const int32_t ERROR_SERIALIZE_FAILED   = 0x00000003;  // 序列化错误
     static const int32_t ERROR_DESERIALIZE_FAILED = 0x00000004;  // 反序列化错误
     static const int32_t ERROR_BAD_REQUEST        = 0x00000005;  // 请求的格式错误或者校验和失败
+    static const int32_t ERROR_CONNECT_FAILED     = 0x00000006;  // 客户端连接失败
+    static const int32_t ERROR_CALL_TIMEOUT       = 0x00000007;  // RPC调用超时
+    static const int32_t ERROR_CALL_FAILED        = 0x00000008;  // RPC调用失败（服务器断开连接，或者无法解析服务器发来的字节序列）
     
     int32_t m_pk_len {0};           // 整包长度，包括开始符和结束符
     int32_t m_msg_id_len {0};       // MsgID长度

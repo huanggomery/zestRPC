@@ -41,7 +41,7 @@ std::shared_ptr<EventLoop> EventLoop::CreateEventLoop()
 EventLoop::EventLoop(): 
     m_tid(t_tid), 
     m_epoll_fd(epoll_create(10)), 
-    m_stop_flag(false),
+    m_is_running(false),
     m_mutex(),
     m_wakeup_fd(eventfd(0, EFD_NONBLOCK)),
     m_timer(new TimerFdEvent()),
@@ -72,6 +72,8 @@ EventLoop::~EventLoop()
         m_pending_tasks.pop();
         if (cb) cb();
     }
+    close(m_wakeup_fd);
+    close(m_epoll_fd);
 }
 
 // 核心功能：循环监听注册在epoll_fd上的文件描述符，并处理回调函数
@@ -81,11 +83,12 @@ void EventLoop::loop()
         LOG_FATAL << "try to start event loop BY other thread";
         exit(-1);
     }
+    m_is_running = true;
     LOG_DEBUG << "EventLoop start";
     std::queue<CallBackFunc> pending_tasks;
     struct epoll_event events[g_epoll_max_events];
 
-    while (!m_stop_flag) {
+    while (m_is_running) {
         ScopeMutex mutex(m_mutex);
         pending_tasks.swap(m_pending_tasks);
         mutex.unlock();
@@ -117,6 +120,17 @@ void EventLoop::loop()
                 addTask(fd_event->handler(FdEvent::ERROR_EVENT));
             }
         }
+
+        mutex.lock();
+        pending_tasks.swap(m_pending_tasks);
+        mutex.unlock();
+        
+        // 处理工作队列中的回调函数
+        while (!pending_tasks.empty()) {
+            auto cb = pending_tasks.front();
+            pending_tasks.pop();
+            if (cb) cb();
+        }
     }
 
     // 退出后清空工作队列
@@ -124,14 +138,15 @@ void EventLoop::loop()
     while (!m_pending_tasks.empty()) {
         auto cb = m_pending_tasks.front();
         m_pending_tasks.pop();
-        if (cb) cb();
+        if (cb) 
+            cb();
     }
 }
 
 void EventLoop::stop()
 {
     LOG_DEBUG << "stop event loop";
-    m_stop_flag = true;
+    m_is_running = false;
     wakeup();
 }
 

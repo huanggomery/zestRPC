@@ -51,9 +51,14 @@ TcpServer::TcpServer(NetAddrBase::s_ptr local_addr) :
         exit(-1);
     }
 
+    // 监听连接套接字
     FdEvent::s_ptr listenfd_event(new FdEvent(m_acceptor->get_listenfd()));
     listenfd_event->listen(EPOLLIN | EPOLLET, std::bind(&TcpServer::accept_callback, this));
     m_main_eventloop->addEpollEvent(listenfd_event);
+
+    // 定期清理已经断开的连接，释放资源
+    TimerEvent::s_ptr timer_event = std::make_shared<TimerEvent>(5000, std::bind(&TcpServer::clear_invalid_connection, this), true);
+    m_main_eventloop->addTimerEvent(timer_event);
 }
 
 // 服务器，启动！
@@ -95,10 +100,16 @@ void TcpServer::accept_callback()
     }
 }
 
-// 清除失效的TCP连接
-void TcpServer::remove_connection(int fd)
+// 清理断开的连接
+void TcpServer::clear_invalid_connection()
 {
-    m_connections[fd].reset();
+    auto it = m_connections.begin();
+    while (it != m_connections.end()) {
+        if (it->second == nullptr || it->second->get_state() == Closed)
+            it = m_connections.erase(it);
+        else
+            ++it;
+    }
 }
 
 } // namespace zest

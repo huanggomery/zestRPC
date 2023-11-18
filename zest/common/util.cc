@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
+#include <stdexcept>
 
 namespace zest
 {
@@ -176,6 +177,21 @@ int32_t get_int32_from_net_bytes(const char *buf)
     int32_t result;
     memcpy(&result, buf, 4);
     return ntohl(result);
+}
+
+// 返回本地IPv4地址
+sockaddr_in get_local_addr(int fd)
+{
+    sockaddr_in local_addr;
+    memset(&local_addr, 0, sizeof(local_addr));
+    socklen_t len = sizeof(local_addr);
+
+    if (getsockname(fd, (sockaddr*)&local_addr, &len) == -1) {
+        LOG_ERROR << "getsockname failed";
+        throw std::runtime_error("getsockname failed");
+    }
+
+    return local_addr;
 }
 
 } // namespace zest

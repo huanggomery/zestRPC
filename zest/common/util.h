@@ -43,6 +43,9 @@ int src_port(const sockaddr_in &addr);
 // 从网络字节序列中读取一个int32
 int32_t get_int32_from_net_bytes(const char *buf);
 
+// 返回本地IPv4地址
+sockaddr_in get_local_addr(int fd);
+
 } // namespace zest
 
 

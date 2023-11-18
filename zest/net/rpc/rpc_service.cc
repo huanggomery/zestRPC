@@ -36,6 +36,12 @@ RpcService::s_ptr RpcService::GetRpcService()
 // RPC处理函数，核心函数！
 void RpcService::process(RpcProtocol::s_ptr req_protocol, RpcProtocol::s_ptr rsp_protocol, TcpConnection::s_ptr connection)
 {
+    // 填充MsgID和方法名字段
+    rsp_protocol->m_msg_id_len = req_protocol->m_msg_id_len;
+    rsp_protocol->m_msg_id = req_protocol->m_msg_id;
+    rsp_protocol->m_method_name_len = req_protocol->m_method_name_len;
+    rsp_protocol->m_method_name = req_protocol->m_method_name;
+
     // 首先解析服务名和方法名
     std::string method_full_name = req_protocol->m_method_name;
     std::string service_name, method_name;

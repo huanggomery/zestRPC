@@ -9,6 +9,7 @@
 #include "zest/net/tcp/tcp_buffer.h"
 #include "zest/net/rpc/rpc_protocol.h"
 #include "zest/common/noncopyable.h"
+#include <google/protobuf/message.h>
 #include <memory>
 #include <string>
 
@@ -46,10 +47,23 @@ public:
     // 获取发送缓存
     TcpBuffer& out_buffer() {return m_out_buffer;}
 
+    // 设置连接状态
+    void set_state(TcpState state) {m_state = state;}
+
+    // 返回连接状态
+    TcpState get_state() const {return m_state;}
+
+    // 填充各个字段，然后将协议编码成字节序列后放入发送缓存，等待可写
+    void prepare(const google::protobuf::Message *request, const std::string &fullname);
+
+    // 得到从服务器返回的协议，仅用于客户端
+    RpcProtocol::s_ptr get_rsp_protocol() const {return m_rsp_protocol;}
+
 private:
     void tcp_read();
     void tcp_write();
-    void execute();    // 读完套接字后，解析、处理请求
+    void server_execute();    // 读完套接字后，解析、处理请求
+    void client_execute();    // 读完套接字后，解析返回的协议
     void shutdown();   // 半关闭
 
 private:
@@ -63,6 +77,7 @@ private:
     RpcDecoder m_decoder;
     TcpConnectionType m_connection_type;
     TcpState m_state;
+    RpcProtocol::s_ptr m_rsp_protocol;   // 用于客户端，保存从服务器返回的协议
 };
     
 } // namespace zest

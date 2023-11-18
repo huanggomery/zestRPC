@@ -8,6 +8,35 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+namespace 
+{
+
+const std::string init_msg_id = "00000000";
+std::string g_msg_id = init_msg_id;
+
+// 用于生成 MsgID 的函数
+std::string generateMsgID()
+{
+    int i = g_msg_id.size() - 1;
+    for (; i >= 0 && g_msg_id[i] == '9'; --i) {
+        /* do nothing */
+    }
+    // 10003999
+    if (i < 0) {
+        g_msg_id = init_msg_id;
+        return g_msg_id;
+    }
+
+    for (int j = i+1; j < g_msg_id.size(); ++j)
+        g_msg_id[j] = '0';
+    
+    g_msg_id[i] += 1;
+    return g_msg_id;
+}
+
+} // namespace 
+
+
 namespace zest
 {
     
@@ -54,6 +83,41 @@ void TcpConnection::clear()
     LOG_INFO << "TCP disconnection, peer address: " << m_peer_addr->to_string();
 }
 
+// 填充各个字段，然后将协议编码成字节序列后放入发送缓存，等待可写
+void TcpConnection::prepare(const google::protobuf::Message *request, const std::string &fullname)
+{
+    // 判断调用者是否是客户端，防止服务端误调用
+    assert(m_connection_type == TcpConnectionByClinet);
+
+    RpcProtocol::s_ptr protocol = std::make_shared<RpcProtocol>();
+
+    // 填充各个字段
+    protocol->m_msg_id = generateMsgID();
+    protocol->m_msg_id_len = protocol->m_msg_id.size();
+    protocol->m_method_name = fullname;
+    protocol->m_method_name_len = fullname.size();
+    set_protocol_error(protocol, RpcProtocol::ERROR_NONE, "");
+    request->SerializeToString(&protocol->m_rpc_data);
+
+    // 计算并填充响应协议的整包长度
+    protocol->m_pk_len = 
+        1 + 4 + 4 + protocol->m_msg_id_len + 
+        4 + protocol->m_method_name_len + 
+        4 + 4 + protocol->m_error_info_len + 
+        protocol->m_rpc_data.size() + 4 + 1;
+    
+    // 填充校验和
+    fill_check_sum(protocol);
+
+    // 将协议编码成字节序列后放入发送缓存
+    RpcEncoder(protocol, m_out_buffer);
+
+    // m_out_buffer 非空，则等待发送
+    if (!m_out_buffer.empty()) {
+        listen_write();
+    }
+}
+
 void TcpConnection::tcp_read()
 {
     bool is_error = false, is_closed = false, is_finished = false;
@@ -93,12 +157,21 @@ void TcpConnection::tcp_read()
         return;
     }
     if (is_closed) {
-        TcpServer::GetTcpServer()->remove_connection(m_fd);  // 随后会马上调用析构函数
+        LOG_DEBUG << "receive FIN from peer";
+        if (m_connection_type == TcpConnectionByServer) {
+            set_state(Closed);
+        }
+        else if (m_connection_type == TcpConnectionByClinet) {
+            m_eventloop->stop();
+        }
         return;
     }
 
     LOG_DEBUG << "receive " << recv_len << " bytes data from " << m_peer_addr->to_string();
-    execute();
+    if (m_connection_type == TcpConnectionByServer)
+        server_execute();
+    else if (m_connection_type == TcpConnectionByClinet)
+        client_execute();
 }
 
 void TcpConnection::tcp_write()
@@ -132,16 +205,14 @@ void TcpConnection::tcp_write()
     listen_read();
 }
 
-void TcpConnection::execute()
+void TcpConnection::server_execute()
 {
+    // 先检查是不是客户端代码误调用此函数
+    assert(m_connection_type == TcpConnectionByServer);
+
     RpcProtocol::s_ptr req_protocol, rsp_protocol = std::make_shared<RpcProtocol>();
     while (req_protocol = m_decoder.decode()) {
         LOG_DEBUG << "decode protocol from " << m_peer_addr->to_string() << " success";
-        rsp_protocol->m_msg_id_len = req_protocol->m_msg_id_len;
-        rsp_protocol->m_msg_id = req_protocol->m_msg_id;
-        rsp_protocol->m_method_name_len = req_protocol->m_method_name_len;
-        rsp_protocol->m_method_name = req_protocol->m_method_name;
-
         RpcService::GetRpcService()->process(req_protocol, rsp_protocol, shared_from_this());
         rsp_protocol->clear();
     }
@@ -157,6 +228,32 @@ void TcpConnection::execute()
         listen_write();
     }
     else {
+        listen_read();
+    }
+}
+
+void TcpConnection::client_execute()
+{
+    // 先检查是不是服务器代码误调用此函数
+    assert(m_connection_type == TcpConnectionByClinet);
+
+    m_rsp_protocol = m_decoder.decode();
+
+    // 解析出错，则停止eventloop
+    if (m_decoder.is_failed()) {
+        std::cerr << "decode failed" << std::endl;
+        m_rsp_protocol.reset();
+        m_eventloop->stop();
+        return;
+    }
+
+    // 判断解析是否完成
+    if (m_rsp_protocol) {
+        // 完成解析，可以停止eventloop
+        m_eventloop->stop();
+    }
+    else {
+        // 未完成解析，继续读套接字
         listen_read();
     }
 }

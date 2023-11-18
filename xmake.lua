@@ -97,6 +97,24 @@ target("test_rpc_client")
     add_syslinks("pthread", "protobuf")
     set_optimize("fastest")
 
+target("test_rpc_channel")
+    set_kind("binary")
+    set_targetdir("bin")
+    set_objectdir("obj")
+    set_languages("c++11")
+    add_files("testcases/test_rpc_channel.cc", 
+              "zest/common/*.cc", 
+              "zest/net/*.cc", 
+              "zest/net/tcp/*.cc", 
+              "zest/net/rpc/*.cc",
+              "protoc/*.cc")
+    add_includedirs("/usr/include", "/usr/local/include", "/usr/include/tinyxml", ".")
+    add_linkdirs("/usr/local/lib")
+    add_links("lib/libtinyxml.a")
+    add_syslinks("pthread", "protobuf")
+    set_optimize("fastest")
+
+
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --

@@ -31,6 +31,9 @@ public:
     // 停止loop循环
     void stop();
 
+    // 判断是否在运行
+    bool is_running() const {return m_is_running;}
+
     // 唤醒epoll_wait
     void wakeup() {m_wakeup_event->wakeup();}
 
@@ -49,7 +52,7 @@ private:
     std::unordered_map<int, SP_FdEvent> m_listen_fds;  // 所有监听的fd的集合
     pid_t m_tid {0};                        // 记录创建该对象的线程号
     int m_epoll_fd {0};                         // epoll_fd
-    bool m_stop_flag {false};                   // 是否停止
+    bool m_is_running {false};                   // 是否正在运行
     std::queue<CallBackFunc> m_pending_tasks;   // 等待处理的回调函数
     Mutex m_mutex;                              // 互斥锁
     int m_wakeup_fd {0};                        // wakeup_fd

@@ -31,13 +31,13 @@ public:
     // 关闭服务器
     void stop();
 
+private:
     // 本地监听套接字的回调函数
     void accept_callback();
 
-    // 清除失效的TCP连接
-    void remove_connection(int fd);
+    // 清理断开的连接
+    void clear_invalid_connection();
 
-private:
     TcpServer(NetAddrBase::s_ptr local_addr);
 
 private:
